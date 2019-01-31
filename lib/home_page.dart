@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:repositories_management/blocs/home_bloc.dart';
+import 'package:repositories_management/models/user.dart';
+//import 'package:repositories_management/blocs/home_bloc_youtube.dart';
+import 'package:repositories_management/blocs/home_bloc_instagram.dart';
 
 class HomePage extends StatelessWidget {
-  final homeBloc = HomeBloc();
+  final _homeBloc = HomeBlocInstagram();
 
   @override
   Widget build(BuildContext context) {
@@ -11,17 +13,20 @@ class HomePage extends StatelessWidget {
         title: Text('Repositories'),
       ),
       body: RefreshIndicator(
-        onRefresh: homeBloc.updateUsers,
+        onRefresh: _homeBloc.updateUsers,
         child: Center(
           child: StreamBuilder(
-            stream: homeBloc.users,
-            initialData: UserLoadingState(),
-            builder: (BuildContext _, AsyncSnapshot<UserState> snapshot) {
+            stream: _homeBloc.users,
+            initialData: UserStateLoading(),
+            builder: (BuildContext context, AsyncSnapshot<UserState> snapshot) {
               final state = snapshot.data;
-              if (state is UserLoadingState) return _loadingBuild();
-              if (state is UserListState) return _userListBuild(state);
-              if (state is UserEmptyState) return _emptyBuild();
-              if (state is UserErrorState) return _errorBuild(state);
+              _homeBloc.currentContext = context;
+
+              if (state is UserStateLoading) return _loadingBuild();
+              if (state is UserStateCached) return _userListCachedBuild(state);
+              if (state is UserStateUpdate) return _userListApiBuild(state);
+              if (state is UserStateEmpty) return _emptyBuild();
+              if (state is UserStateError) return _errorBuild(state);
             },
           ),
         ),
@@ -29,26 +34,51 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _userListBuild(UserListState state) {
-    final listTile = state.list.map((user) {
-      return ListTile(title: Text(user.name), subtitle: Text(user.email));
-    }).toList();
-
+  Widget _userListCachedBuild(UserStateCached state) {
     return ListView(
       scrollDirection: Axis.vertical,
-      children: listTile,
+      children: state.data.map(_listTileItemBuild).toList(),
+    );
+  }
+
+  Widget _userListApiBuild(UserStateUpdate state) {
+    return ListView(
+      scrollDirection: Axis.vertical,
+      children: state.data.map(_listTileItemBuild).toList(),
+    );
+  }
+
+  Widget _listTileItemBuild(User user) {
+    return ListTile(
+      title: Text(user.name ?? ''),
+      subtitle: Text(user.email ?? ''),
     );
   }
 
   Widget _loadingBuild() {
-    return CircularProgressIndicator();
+    return ListView(
+      children: <Widget>[
+        CircularProgressIndicator(),
+      ],
+    );
   }
 
   Widget _emptyBuild() {
-    return Text('Nenhum usuário listado');
+    return ListView(
+      children: <Widget>[
+        Text('Nenhum usuário listado'),
+      ],
+    );
   }
 
-  Widget _errorBuild(UserErrorState state) {
-    return Text(state.message);
+  Widget _errorBuild(UserStateError state) {
+    return ListView(
+      children: <Widget>[
+        Container(
+          color: Colors.redAccent,
+          child: Text(state.message),
+        ),
+      ],
+    );
   }
 }

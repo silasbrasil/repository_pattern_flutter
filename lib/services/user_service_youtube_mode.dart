@@ -4,7 +4,7 @@ import 'package:repositories_management/models/user.dart';
 import 'package:repositories_management/repositories/user_api_repository.dart';
 import 'package:repositories_management/repositories/user_local_repository.dart';
 
-class UserService {
+class UserServiceYoutubeMode {
   final userLocalRepository = UserLocalRepository();
   final userApiRepository = UserApiRepository();
 

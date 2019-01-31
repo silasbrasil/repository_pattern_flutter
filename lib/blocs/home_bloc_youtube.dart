@@ -3,16 +3,18 @@ import 'package:rxdart/rxdart.dart';
 
 import 'package:repositories_management/exceptions/api_exception.dart';
 import 'package:repositories_management/models/user.dart';
-import 'package:repositories_management/services/user_service.dart';
+import 'package:repositories_management/services/user_service_youtube_mode.dart';
 
-class HomeBloc {
-  final userService = UserService();
+/// Essa HomeBloc funciona semelhante o [youtube] mas com cache local
+/// para caso de ausência de internet quando app abre.
+class HomeBlocYoutube {
+  final userService = UserServiceYoutubeMode();
 
   final _networkErrorText = 'Sem conexão com a internet!';
   final _usersState = PublishSubject<UserState>()
     ..startWith(UserLoadingState());
 
-  HomeBloc() {
+  HomeBlocYoutube() {
     userService.getAll().then((userList) {
       if (userList.isEmpty) {
         _usersState.sink.add(UserEmptyState());
