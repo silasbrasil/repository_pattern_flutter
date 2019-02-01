@@ -1,35 +1,41 @@
 import 'dart:io';
-import 'package:rxdart/rxdart.dart';
 import 'package:flutter/material.dart';
+import 'package:rxdart/rxdart.dart';
 
 import 'package:repositories_management/models/user.dart';
 import 'package:repositories_management/exceptions/api_exception.dart';
 import 'package:repositories_management/services/user_service_instagram_mode.dart';
 
 class HomeBlocInstagram {
-  BuildContext _currentContext;
-
   final _userService = UserServiceInstagramMode();
   final _usersState = BehaviorSubject<UserState>(seedValue: UserStateLoading())
     ..delay(Duration(milliseconds: 300));
 
-  HomeBlocInstagram() {
-    _userService.getFromCache().then((cachedUserList) {
-      if (cachedUserList.isNotEmpty)
-        _emitUserState(UserStateCached(cachedUserList));
+  Function snackBarCallback;
+  Function popUpCallback;
+  BuildContext context;
 
-      return _userService.getFromApi();
-    }).then((updatedUserList) {
-      if (updatedUserList.isEmpty)
-        _emitUserState(UserStateEmpty());
-      else
-        _emitUserState(UserStateUpdate(updatedUserList));
-    }).catchError(_handlerError);
+  HomeBlocInstagram() {
+    _loadUsers();
   }
 
   Stream<UserState> get users => _usersState.stream;
 
-  set currentContext (BuildContext context) => _currentContext = context;
+  void _loadUsers() async {
+    final cachedUserList = await _userService.getFromCache();
+      if (cachedUserList.isNotEmpty)
+        _emitUserState(UserStateCached(cachedUserList));
+
+    try {
+      final updatedUserList = await _userService.getFromApi();
+      if (updatedUserList.isEmpty)
+        _emitUserState(UserStateEmpty());
+      else
+        _emitUserState(UserStateUpdate(updatedUserList));
+    } catch(error) {
+      _handlerError(error);
+    }
+  }
 
   Future<void> updateUsers() async {
     try {
@@ -49,7 +55,7 @@ class HomeBlocInstagram {
 
   void _emitErrorState(Object error) {
     if (error is SocketException) {
-      _emitUserState(UserStateError(0, 'Sem conexão com a internet!'));
+      _emitUserState(UserStateError(0, 'Sem conexão!'));
     } else if (error is ApiException) {
       _emitUserState(UserStateError(error.code, error.message));
     }
@@ -62,13 +68,12 @@ class HomeBlocInstagram {
         lastState is UserStateError) {
       _emitErrorState(error);
     } else {
-      showSnackBar();
+      if (error is SocketException) {
+        popUpCallback('Sem conexão!', context);
+      } else if (error is ApiException) {
+        popUpCallback(error.message, context);
+      }
     }
-  }
-
-  void showSnackBar() {
-    final snackBar = SnackBar(content: Text('Não foi possível atualizar os dados!'));
-    Scaffold.of(_currentContext).showSnackBar(snackBar);
   }
 
   void dispose() {
