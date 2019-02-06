@@ -12,7 +12,8 @@ class UserServiceCacheManager {
   Future<User> get() async {
     final cacheData = await _userSqlRepo.get();
 
-    if (cacheData != null && cacheData.isValid)
+    if (cacheData == null) return null;
+    if (cacheData.isValid)
       return User.fromJson(jsonDecode(cacheData.result)[0]);
 
     return update();

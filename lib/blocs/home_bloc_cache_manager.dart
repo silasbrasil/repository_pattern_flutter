@@ -25,6 +25,10 @@ class HomeBlocCacheManager {
   void _loadUser() async {
     try {
       final user = await _userService.get();
+      if (user == null && _userState.stream.value == UserStateLoading()) {
+        final userUpdated = await _userService.update();
+        _userState.sink.add(UserStatePopulated(userUpdated));
+      }
       _userState.sink.add(UserStatePopulated(user));
     } on SocketException catch(_) {
       _userState.sink.add(UserStateError(0, _networkErrorText));
