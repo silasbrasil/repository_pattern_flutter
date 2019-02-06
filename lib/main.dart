@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:repositories_management/home_page.dart';
+import 'package:repositories_management/screens/home_page.dart';
 
 void main() => runApp(MyApp());
 

@@ -1,4 +1,6 @@
-import 'package:repositories_management/config.dart';
+import 'dart:async';
+
+import 'package:repositories_management/utils/config.dart';
 import 'package:repositories_management/exceptions/api_exception.dart';
 import 'package:http/http.dart' as http;
 

@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import 'package:repositories_management/blocs/home_state.dart';
 import 'package:repositories_management/models/user.dart';
 //import 'package:repositories_management/blocs/home_bloc_youtube.dart';
-import 'package:repositories_management/blocs/home_bloc_instagram.dart';
-import 'package:repositories_management/details_page.dart';
+//import 'package:repositories_management/blocs/home_bloc_instagram.dart';
+import 'package:repositories_management/blocs/home_bloc_cache_manager.dart';
+import 'package:repositories_management/screens/details_page.dart';
 
 class HomePage extends StatelessWidget {
-  final _homeBloc = HomeBlocInstagram();
+  final _homeBloc = HomeBlocCacheManager();
 
   @override
   Widget build(BuildContext context) {
@@ -16,23 +21,23 @@ class HomePage extends StatelessWidget {
       body: Builder(
         builder: (BuildContext context) {
           print('*** Build Scaffold ***');
-          _homeBloc.snackBarCallback = showSnackBar;
-          _homeBloc.popUpCallback = myShowDialog;
+//          _homeBloc.snackBarCallback = showSnackBar;
+//          _homeBloc.popUpCallback = myShowDialog;
           _homeBloc.context = context;
 
           return RefreshIndicator(
-            onRefresh: _homeBloc.updateUsers,
+            onRefresh: _homeBloc.update,
             child: Center(
               child: StreamBuilder(
-                stream: _homeBloc.users,
+                stream: _homeBloc.user,
                 initialData: UserStateLoading(),
                 builder:
                     (BuildContext context, AsyncSnapshot<UserState> snapshot) {
                   final state = snapshot.data;
                   if (state is UserStateLoading) return _loadingBuild();
-                  if (state is UserStateCached)
-                    return _userListCachedBuild(state);
-                  if (state is UserStateUpdate) return _userListApiBuild(state);
+//                  if (state is UserStateCached)
+//                    return _userListCachedBuild(state);
+                  if (state is UserStatePopulated) return _userListApiBuild(state);
                   if (state is UserStateEmpty) return _emptyBuild();
                   if (state is UserStateError) return _errorBuild(state);
                 },
@@ -44,32 +49,38 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _userListCachedBuild(UserStateCached state) {
+//  Widget _userListCachedBuild(UserStateCached state) {
+//    return ListView(
+//      scrollDirection: Axis.vertical,
+//      children: state.data.map(_listTileItemBuild).toList(),
+//    );
+//  }
+
+  Widget _userListApiBuild(UserStatePopulated state) {
     return ListView(
       scrollDirection: Axis.vertical,
-      children: state.data.map(_listTileItemBuild).toList(),
+      children: [
+        Container(
+          color: Colors.redAccent,
+          height: 100,
+          child: Text(state.data.name),
+        ),
+      ],
     );
   }
 
-  Widget _userListApiBuild(UserStateUpdate state) {
-    return ListView(
-      scrollDirection: Axis.vertical,
-      children: state.data.map(_listTileItemBuild).toList(),
-    );
-  }
-
-  Widget _listTileItemBuild(User user) {
-    return ListTile(
-      title: Text(user.name ?? ''),
-      subtitle: Text(user.email ?? ''),
-      onTap: () {
-        Navigator.push(
-          _homeBloc.context,
-          MaterialPageRoute(builder: (context) => DetailsPage()),
-        );
-      },
-    );
-  }
+//  Widget _listTileItemBuild(User user) {
+//    return ListTile(
+//      title: Text(user.name ?? ''),
+//      subtitle: Text(user.email ?? ''),
+//      onTap: () {
+//        Navigator.push(
+//          _homeBloc.context,
+//          MaterialPageRoute(builder: (context) => DetailsPage()),
+//        );
+//      },
+//    );
+//  }
 
   Widget _loadingBuild() {
     return ListView(
